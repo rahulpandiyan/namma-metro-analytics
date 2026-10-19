@@ -1,139 +1,155 @@
 #!/usr/bin/env python3
 """
-BMRCL Ridership Interactive Dashboard Server
-Features comprehensive analytics for Green Line, Purple Line, and Yellow Line.
+BMRCL Ridership Interactive Dashboard & API Server
+Compatible with Vercel Serverless Functions (WSGI/app) and local development.
 """
 
 import json
 import os
 import urllib.parse
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-import pandas as pd
+from wsgiref.simple_server import make_server
 
-PORT = 8000
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_FILE = os.path.join(BASE_DIR, 'data_cache.json')
+DATA_DIR = os.path.join(BASE_DIR, 'data')
 
-METRO_LINES = {
-    'purple': [
-        "Challaghatta", "Kengeri", "Kengeri Bus Terminal", "Pattanagere", "Jnanabharathi",
-        "Rajarajeshwari Nagar", "Pantharapalya - Nayandahalli", "Mysore Road", "Deepanjali Nagar",
-        "Attiguppe", "Vijayanagar", "Sri Balagangadharanatha Swamiji Station, Hosahalli",
-        "Magadi Road", "Krantivira Sangolli Rayanna Railway Station",
-        "Nadaprabhu Kempegowda Station, Majestic", "Sir M. Visvesvaraya Stn., Central College",
-        "Dr. B. R. Ambedkar Station, Vidhana Soudha", "Cubbon Park", "Mahatma Gandhi Road",
-        "Trinity", "Halasuru", "Indiranagar", "Swami Vivekananda Road", "Baiyappanahalli",
-        "Benniganahalli", "Krishnarajapura", "Singayyanapalya", "Garudacharpalya", "Hoodi",
-        "Seetharampalya", "Kundalahalli", "Nallurahalli", "Sri Sathya Sai Hospital",
-        "Pattandur Agrahara", "Kadugodi Tree Park", "Hopefarm Channasandra", "Whitefield (Kadugodi)"
-    ],
-    'green': [
-        "Madavara", "Chikkabidarakallu", "Manjunathanagara", "Nagasandra", "Dasarahalli",
-        "Jalahalli", "Peenya Industry", "Peenya", "Goraguntepalya", "Yeshwantpur",
-        "Sandal Soap Factory", "Mahalakshmi", "Rajajinagar", "Mahakavi Kuvempu Road",
-        "Srirampura", "Mantri Square Sampige Road", "Nadaprabhu Kempegowda Station, Majestic",
-        "Chickpete", "Krishna Rajendra Market", "National College", "Lalbagh",
-        "South End Circle", "Jayanagar", "Rashtreeya Vidyalaya Road", "Banashankari",
-        "Jaya Prakash Nagar", "Yelachenahalli", "Konanakunte Cross", "Doddakallasandra",
-        "Vajarahalli", "Thalaghattapura", "Silk Institute"
-    ],
-    'yellow': [
-        "Rashtreeya Vidyalaya Road", "Ragigudda", "Jayadeva Hospital", "BTM Layout",
-        "Central Silk Board", "Bommanahalli", "Hongasandra", "Kudlu Gate", "Singasandra",
-        "Hosa Road", "Beratena Agrahara", "Electronic City",
-        "Infosys Foundation Konappana Agrahara", "Huskur Road", "Biocon Hebbagodi",
-        "Delta Electronics Bommasandra"
-    ]
-}
+# Load cached analytics (generated from raw datasets)
+if os.path.exists(CACHE_FILE):
+    with open(CACHE_FILE, 'r') as f:
+        cache = json.load(f)
+else:
+    # Fallback to computing from parquet if data_cache.json is absent
+    import pandas as pd
+    METRO_LINES = {
+        'purple': [
+            "Challaghatta", "Kengeri", "Kengeri Bus Terminal", "Pattanagere", "Jnanabharathi",
+            "Rajarajeshwari Nagar", "Pantharapalya - Nayandahalli", "Mysore Road", "Deepanjali Nagar",
+            "Attiguppe", "Vijayanagar", "Sri Balagangadharanatha Swamiji Station, Hosahalli",
+            "Magadi Road", "Krantivira Sangolli Rayanna Railway Station",
+            "Nadaprabhu Kempegowda Station, Majestic", "Sir M. Visvesvaraya Stn., Central College",
+            "Dr. B. R. Ambedkar Station, Vidhana Soudha", "Cubbon Park", "Mahatma Gandhi Road",
+            "Trinity", "Halasuru", "Indiranagar", "Swami Vivekananda Road", "Baiyappanahalli",
+            "Benniganahalli", "Krishnarajapura", "Singayyanapalya", "Garudacharpalya", "Hoodi",
+            "Seetharampalya", "Kundalahalli", "Nallurahalli", "Sri Sathya Sai Hospital",
+            "Pattandur Agrahara", "Kadugodi Tree Park", "Hopefarm Channasandra", "Whitefield (Kadugodi)"
+        ],
+        'green': [
+            "Madavara", "Chikkabidarakallu", "Manjunathanagara", "Nagasandra", "Dasarahalli",
+            "Jalahalli", "Peenya Industry", "Peenya", "Goraguntepalya", "Yeshwantpur",
+            "Sandal Soap Factory", "Mahalakshmi", "Rajajinagar", "Mahakavi Kuvempu Road",
+            "Srirampura", "Mantri Square Sampige Road", "Nadaprabhu Kempegowda Station, Majestic",
+            "Chickpete", "Krishna Rajendra Market", "National College", "Lalbagh",
+            "South End Circle", "Jayanagar", "Rashtreeya Vidyalaya Road", "Banashankari",
+            "Jaya Prakash Nagar", "Yelachenahalli", "Konanakunte Cross", "Doddakallasandra",
+            "Vajarahalli", "Thalaghattapura", "Silk Institute"
+        ],
+        'yellow': [
+            "Rashtreeya Vidyalaya Road", "Ragigudda", "Jayadeva Hospital", "BTM Layout",
+            "Central Silk Board", "Bommanahalli", "Hongasandra", "Kudlu Gate", "Singasandra",
+            "Hosa Road", "Beratena Agrahara", "Electronic City",
+            "Infosys Foundation Konappana Agrahara", "Huskur Road", "Biocon Hebbagodi",
+            "Delta Electronics Bommasandra"
+        ]
+    }
+    station_to_lines = {}
+    for line_name, st_list in METRO_LINES.items():
+        for st in st_list:
+            if st not in station_to_lines:
+                station_to_lines[st] = []
+            station_to_lines[st].append(line_name)
 
-station_to_lines = {}
-for line_name, st_list in METRO_LINES.items():
-    for st in st_list:
-        if st not in station_to_lines:
-            station_to_lines[st] = []
-        station_to_lines[st].append(line_name)
+    df_entries = pd.read_parquet(os.path.join(DATA_DIR, 'station-hourly.parquet'))
+    df_exits = pd.read_parquet(os.path.join(DATA_DIR, 'station-hourly-exits.parquet'))
+    df_pairs = pd.read_parquet(os.path.join(DATA_DIR, 'stationpair-hourly-enhanced.parquet'))
 
-print("Loading ridership datasets...")
-df_entries = pd.read_parquet(os.path.join(DATA_DIR, 'station-hourly.parquet'))
-df_exits = pd.read_parquet(os.path.join(DATA_DIR, 'station-hourly-exits.parquet'))
-df_pairs = pd.read_parquet(os.path.join(DATA_DIR, 'stationpair-hourly-enhanced.parquet'))
+    total_entries = int(df_entries['Ridership'].sum())
+    total_exits = int(df_exits['Ridership'].sum())
+    total_revenue = int(df_pairs['Revenue'].sum())
+    unique_stations = sorted(list(set(df_entries['Station'].unique()) | set(df_exits['Station'].unique())))
+    date_min = str(min(df_entries['Date'].min(), df_exits['Date'].min()))
+    date_max = str(max(df_entries['Date'].max(), df_exits['Date'].max()))
+    hourly_labels = [f"{h:02d}:00" for h in range(24)]
 
-total_entries = int(df_entries['Ridership'].sum())
-total_exits = int(df_exits['Ridership'].sum())
-total_revenue = int(df_pairs['Revenue'].sum())
-unique_stations = sorted(list(set(df_entries['Station'].unique()) | set(df_exits['Station'].unique())))
-date_min = str(min(df_entries['Date'].min(), df_exits['Date'].min()))
-date_max = str(max(df_entries['Date'].max(), df_exits['Date'].max()))
+    def get_hourly_profile(stations_filter=None):
+        ent = df_entries[df_entries['Station'].isin(stations_filter)] if stations_filter else df_entries
+        ext = df_exits[df_exits['Station'].isin(stations_filter)] if stations_filter else df_exits
+        h_ent = ent.groupby('Hour')['Ridership'].sum().to_dict()
+        h_ext = ext.groupby('Hour')['Ridership'].sum().to_dict()
+        return {
+            'entries': [int(h_ent.get(h, 0)) for h in range(24)],
+            'exits': [int(h_ext.get(h, 0)) for h in range(24)]
+        }
 
-# Hourly by line calculations
-hourly_labels = [f"{h:02d}:00" for h in range(24)]
+    line_stats = {}
+    for line_name, st_list in METRO_LINES.items():
+        ent_sub = df_entries[df_entries['Station'].isin(st_list)]
+        ext_sub = df_exits[df_exits['Station'].isin(st_list)]
+        ent_sum = int(ent_sub['Ridership'].sum())
+        ext_sum = int(ext_sub['Ridership'].sum())
+        line_stats[line_name] = {
+            'station_count': len(st_list),
+            'entries': ent_sum,
+            'exits': ext_sum,
+            'total': ent_sum + ext_sum
+        }
 
-def get_hourly_profile(stations_filter=None):
-    if stations_filter:
-        ent = df_entries[df_entries['Station'].isin(stations_filter)]
-        ext = df_exits[df_exits['Station'].isin(stations_filter)]
-    else:
-        ent = df_entries
-        ext = df_exits
-    h_ent = ent.groupby('Hour')['Ridership'].sum().to_dict()
-    h_ext = ext.groupby('Hour')['Ridership'].sum().to_dict()
-    return {
-        'entries': [int(h_ent.get(h, 0)) for h in range(24)],
-        'exits': [int(h_ext.get(h, 0)) for h in range(24)]
+    st_entries = df_entries.groupby('Station')['Ridership'].sum().to_dict()
+    st_exits = df_exits.groupby('Station')['Ridership'].sum().to_dict()
+    stations_summary = []
+    for st in unique_stations:
+        ent = int(st_entries.get(st, 0))
+        ext = int(st_exits.get(st, 0))
+        lines_for_st = station_to_lines.get(st, [])
+        stations_summary.append({
+            'station': st, 'entries': ent, 'exits': ext, 'total': ent + ext,
+            'lines': lines_for_st, 'is_interchange': len(lines_for_st) > 1
+        })
+    stations_summary.sort(key=lambda x: x['total'], reverse=True)
+
+    top_routes_df = df_pairs.groupby(['Origin Station', 'Destination Station', 'Travelled Stations', 'Fare Slab', 'Fare'], as_index=False).agg({
+        'Ridership': 'sum', 'Revenue': 'sum'
+    }).sort_values('Ridership', ascending=False)
+    top_routes = []
+    for r in top_routes_df.head(100).to_dict(orient='records'):
+        r['Origin_Lines'] = station_to_lines.get(r['Origin Station'], [])
+        r['Dest_Lines'] = station_to_lines.get(r['Destination Station'], [])
+        top_routes.append(r)
+
+    station_hourly_lookup = {}
+    for st in unique_stations:
+        sub_ent = df_entries[df_entries['Station'] == st]
+        sub_ext = df_exits[df_exits['Station'] == st]
+        h_ent = sub_ent.groupby('Hour')['Ridership'].sum().to_dict()
+        h_ext = sub_ext.groupby('Hour')['Ridership'].sum().to_dict()
+        station_hourly_lookup[st] = {
+            'entries': [int(h_ent.get(h, 0)) for h in range(24)],
+            'exits': [int(h_ext.get(h, 0)) for h in range(24)]
+        }
+
+    cache = {
+        'summary': {
+            'total_entries': total_entries, 'total_exits': total_exits, 'total_revenue': total_revenue,
+            'station_count': len(unique_stations), 'lines': line_stats, 'date_min': date_min, 'date_max': date_max
+        },
+        'hourly_labels': hourly_labels,
+        'hourly_all': get_hourly_profile(),
+        'hourly_purple': get_hourly_profile(METRO_LINES['purple']),
+        'hourly_green': get_hourly_profile(METRO_LINES['green']),
+        'hourly_yellow': get_hourly_profile(METRO_LINES['yellow']),
+        'stations_summary': stations_summary,
+        'top_routes': top_routes,
+        'metro_lines': METRO_LINES,
+        'station_hourly_lookup': station_hourly_lookup
     }
 
-hourly_all = get_hourly_profile()
-hourly_purple = get_hourly_profile(METRO_LINES['purple'])
-hourly_green = get_hourly_profile(METRO_LINES['green'])
-hourly_yellow = get_hourly_profile(METRO_LINES['yellow'])
-
-# Line totals
-line_stats = {}
-for line_name, st_list in METRO_LINES.items():
-    ent_sub = df_entries[df_entries['Station'].isin(st_list)]
-    ext_sub = df_exits[df_exits['Station'].isin(st_list)]
-    ent_sum = int(ent_sub['Ridership'].sum())
-    ext_sum = int(ext_sub['Ridership'].sum())
-    line_stats[line_name] = {
-        'station_count': len(st_list),
-        'entries': ent_sum,
-        'exits': ext_sum,
-        'total': ent_sum + ext_sum
-    }
-
-# Station aggregates
-st_entries = df_entries.groupby('Station')['Ridership'].sum().to_dict()
-st_exits = df_exits.groupby('Station')['Ridership'].sum().to_dict()
-
-stations_summary = []
-for st in unique_stations:
-    ent = int(st_entries.get(st, 0))
-    ext = int(st_exits.get(st, 0))
-    lines_for_st = station_to_lines.get(st, [])
-    stations_summary.append({
-        'station': st,
-        'entries': ent,
-        'exits': ext,
-        'total': ent + ext,
-        'lines': lines_for_st,
-        'is_interchange': len(lines_for_st) > 1
-    })
-stations_summary.sort(key=lambda x: x['total'], reverse=True)
-
-# Top 100 routes
-top_routes_df = df_pairs.groupby(['Origin Station', 'Destination Station', 'Travelled Stations', 'Fare Slab', 'Fare'], as_index=False).agg({
-    'Ridership': 'sum',
-    'Revenue': 'sum'
-}).sort_values('Ridership', ascending=False)
-
-top_routes = []
-for r in top_routes_df.head(100).to_dict(orient='records'):
-    orig_lines = station_to_lines.get(r['Origin Station'], [])
-    dest_lines = station_to_lines.get(r['Destination Station'], [])
-    r['Origin_Lines'] = orig_lines
-    r['Dest_Lines'] = dest_lines
-    top_routes.append(r)
-
-print(f"Data ready. Total entries: {total_entries:,}, Total exits: {total_exits:,}")
+summary = cache['summary']
+line_stats = summary['lines']
+date_min = summary['date_min']
+date_max = summary['date_max']
+total_entries = summary['total_entries']
+total_exits = summary['total_exits']
+total_revenue = summary['total_revenue']
+station_count = summary['station_count']
 
 HTML_PAGE = """<!DOCTYPE html>
 <html lang="en">
@@ -149,9 +165,6 @@ HTML_PAGE = """<!DOCTYPE html>
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; color: #f1f5f9; }
     .card-glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .purple-border { border-color: #a855f7; }
-    .green-border { border-color: #22c55e; }
-    .yellow-border { border-color: #eab308; }
     .badge-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
     .badge-green { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
     .badge-yellow { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
@@ -162,7 +175,6 @@ HTML_PAGE = """<!DOCTYPE html>
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
-  <!-- Header -->
   <header class="border-b border-slate-800 bg-slate-900/90 sticky top-0 z-50 backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
@@ -191,9 +203,7 @@ HTML_PAGE = """<!DOCTYPE html>
   </header>
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-    <!-- METRO LINES BREAKDOWN CARDS -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-      <!-- Purple Line Card -->
       <div class="card-glass p-5 rounded-2xl relative overflow-hidden border-t-4 border-t-purple-500 hover:scale-[1.01] transition">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center space-x-2">
@@ -211,7 +221,6 @@ HTML_PAGE = """<!DOCTYPE html>
         <div class="text-[11px] text-slate-400 mt-2 truncate">Challaghatta ↔ Whitefield (Kadugodi)</div>
       </div>
 
-      <!-- Green Line Card -->
       <div class="card-glass p-5 rounded-2xl relative overflow-hidden border-t-4 border-t-emerald-500 hover:scale-[1.01] transition">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center space-x-2">
@@ -229,7 +238,6 @@ HTML_PAGE = """<!DOCTYPE html>
         <div class="text-[11px] text-slate-400 mt-2 truncate">Madavara ↔ Silk Institute</div>
       </div>
 
-      <!-- Yellow Line Card -->
       <div class="card-glass p-5 rounded-2xl relative overflow-hidden border-t-4 border-t-yellow-400 hover:scale-[1.01] transition">
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center space-x-2">
@@ -248,7 +256,6 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- FILTER TABS FOR METRO LINES -->
     <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-2 rounded-xl border border-slate-800">
       <div class="flex items-center space-x-2">
         <span class="text-xs text-slate-400 font-semibold px-2">Line Filter:</span>
@@ -262,9 +269,7 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- Charts Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Hourly Comparison Across Lines -->
       <div class="card-glass p-6 rounded-2xl flex flex-col">
         <div class="flex items-center justify-between mb-4">
           <div>
@@ -282,7 +287,6 @@ HTML_PAGE = """<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- Top Stations on Selected Line -->
       <div class="card-glass p-6 rounded-2xl flex flex-col">
         <div class="flex items-center justify-between mb-4">
           <div>
@@ -296,7 +300,6 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- Station Inspector Section -->
     <div class="card-glass p-6 rounded-2xl space-y-5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
         <div>
@@ -340,7 +343,6 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- Top Station Pairs Table -->
     <div class="card-glass p-6 rounded-2xl space-y-4">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -367,45 +369,6 @@ HTML_PAGE = """<!DOCTYPE html>
         </table>
       </div>
     </div>
-
-    <!-- Line Station Directory Accordion / Grid -->
-    <div class="card-glass p-6 rounded-2xl space-y-4">
-      <h2 class="text-base font-bold text-white">Metro Network Station Directory by Line</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-        <!-- Purple Line Column -->
-        <div class="bg-slate-900/60 p-4 rounded-xl border border-purple-500/30">
-          <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
-            <span class="font-bold text-purple-400 flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 mr-2"></span>Purple Line (37)</span>
-            <span class="text-[10px] text-slate-400">East-West Corridor</span>
-          </div>
-          <div class="max-h-64 overflow-y-auto space-y-1.5 pr-1">
-""" + "\n".join([f'<div class="flex items-center justify-between py-1 px-2 rounded hover:bg-slate-800/60"><span class="text-slate-200">{st}</span>{"<span class=\'badge-interchange px-1.5 rounded text-[10px]\'>Interchange</span>" if st in ["Nadaprabhu Kempegowda Station, Majestic"] else ""}</div>' for st in METRO_LINES['purple']]) + """
-          </div>
-        </div>
-
-        <!-- Green Line Column -->
-        <div class="bg-slate-900/60 p-4 rounded-xl border border-emerald-500/30">
-          <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
-            <span class="font-bold text-emerald-400 flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-2"></span>Green Line (32)</span>
-            <span class="text-[10px] text-slate-400">North-South Corridor</span>
-          </div>
-          <div class="max-h-64 overflow-y-auto space-y-1.5 pr-1">
-""" + "\n".join([f'<div class="flex items-center justify-between py-1 px-2 rounded hover:bg-slate-800/60"><span class="text-slate-200">{st}</span>{"<span class=\'badge-interchange px-1.5 rounded text-[10px]\'>Interchange</span>" if st in ["Nadaprabhu Kempegowda Station, Majestic", "Rashtreeya Vidyalaya Road"] else ""}</div>' for st in METRO_LINES['green']]) + """
-          </div>
-        </div>
-
-        <!-- Yellow Line Column -->
-        <div class="bg-slate-900/60 p-4 rounded-xl border border-yellow-500/30">
-          <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-800">
-            <span class="font-bold text-yellow-400 flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-yellow-400 mr-2"></span>Yellow Line (16)</span>
-            <span class="text-[10px] text-slate-400">Electronics City Corridor</span>
-          </div>
-          <div class="max-h-64 overflow-y-auto space-y-1.5 pr-1">
-""" + "\n".join([f'<div class="flex items-center justify-between py-1 px-2 rounded hover:bg-slate-800/60"><span class="text-slate-200">{st}</span>{"<span class=\'badge-interchange px-1.5 rounded text-[10px]\'>Interchange</span>" if st in ["Rashtreeya Vidyalaya Road"] else ""}</div>' for st in METRO_LINES['yellow']]) + """
-          </div>
-        </div>
-      </div>
-    </div>
   </main>
 
   <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
@@ -413,19 +376,18 @@ HTML_PAGE = """<!DOCTYPE html>
   </footer>
 
   <script>
-    const hourlyLabels = """ + json.dumps(hourly_labels) + """;
-    const hourlyPurple = """ + json.dumps(hourly_purple) + """;
-    const hourlyGreen = """ + json.dumps(hourly_green) + """;
-    const hourlyYellow = """ + json.dumps(hourly_yellow) + """;
-    const stationsSummary = """ + json.dumps(stations_summary) + """;
-    const topRoutes = """ + json.dumps(top_routes) + """;
-    const metroLines = """ + json.dumps(METRO_LINES) + """;
+    const hourlyLabels = """ + json.dumps(cache['hourly_labels']) + """;
+    const hourlyPurple = """ + json.dumps(cache['hourly_purple']) + """;
+    const hourlyGreen = """ + json.dumps(cache['hourly_green']) + """;
+    const hourlyYellow = """ + json.dumps(cache['hourly_yellow']) + """;
+    const stationsSummary = """ + json.dumps(cache['stations_summary']) + """;
+    const topRoutes = """ + json.dumps(cache['top_routes']) + """;
+    const stationHourlyLookup = """ + json.dumps(cache['station_hourly_lookup']) + """;
 
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
-    // 1. Lines Hourly Comparison Chart
-    const linesChart = new Chart(document.getElementById('linesHourlyChart'), {
+    new Chart(document.getElementById('linesHourlyChart'), {
       type: 'line',
       data: {
         labels: hourlyLabels,
@@ -473,7 +435,6 @@ HTML_PAGE = """<!DOCTYPE html>
       }
     });
 
-    // 2. Top Stations Bar Chart
     let topStationsChartInstance = null;
     function renderTopStations(stations) {
       const top10 = stations.slice(0, 10);
@@ -483,18 +444,8 @@ HTML_PAGE = """<!DOCTYPE html>
         data: {
           labels: top10.map(s => s.station.length > 20 ? s.station.substring(0, 18) + '...' : s.station),
           datasets: [
-            {
-              label: 'Entries',
-              data: top10.map(s => s.entries),
-              backgroundColor: '#a855f7',
-              borderRadius: 4
-            },
-            {
-              label: 'Exits',
-              data: top10.map(s => s.exits),
-              backgroundColor: '#22c55e',
-              borderRadius: 4
-            }
+            { label: 'Entries', data: top10.map(s => s.entries), backgroundColor: '#a855f7', borderRadius: 4 },
+            { label: 'Exits', data: top10.map(s => s.exits), backgroundColor: '#22c55e', borderRadius: 4 }
           ]
         },
         options: {
@@ -508,20 +459,16 @@ HTML_PAGE = """<!DOCTYPE html>
         }
       });
     }
-
     renderTopStations(stationsSummary);
 
-    // 3. Line Filter Switcher
     let currentLineFilter = 'all';
     function setLineFilter(line) {
       currentLineFilter = line;
       ['all', 'purple', 'green', 'yellow'].forEach(l => {
         const btn = document.getElementById('btn-filter-' + l);
-        if (l === line) {
-          btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-700 text-white transition';
-        } else {
-          btn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition';
-        }
+        btn.className = l === line 
+          ? 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-700 text-white transition'
+          : 'px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition';
       });
 
       let filteredStations = stationsSummary;
@@ -536,7 +483,6 @@ HTML_PAGE = """<!DOCTYPE html>
       renderRoutes();
     }
 
-    // 4. Station Inspector
     const select = document.getElementById('stationSelect');
     function populateStationSelect(list) {
       select.innerHTML = '';
@@ -552,7 +498,7 @@ HTML_PAGE = """<!DOCTYPE html>
     }
 
     let inspectorChart = null;
-    async function loadStationData(stationName) {
+    function loadStationData(stationName) {
       const st = stationsSummary.find(x => x.station === stationName) || { entries: 0, exits: 0, lines: [] };
       document.getElementById('inspectorStationName').textContent = stationName;
       document.getElementById('inspectorEntries').textContent = st.entries.toLocaleString();
@@ -573,9 +519,7 @@ HTML_PAGE = """<!DOCTYPE html>
         badgeContainer.appendChild(span);
       }
 
-      const res = await fetch('/api/station?name=' + encodeURIComponent(stationName));
-      const data = await res.json();
-
+      const data = stationHourlyLookup[stationName] || { entries: new Array(24).fill(0), exits: new Array(24).fill(0) };
       let maxHour = 0, maxVal = -1;
       data.entries.forEach((val, h) => {
         if (val + data.exits[h] > maxVal) {
@@ -591,18 +535,8 @@ HTML_PAGE = """<!DOCTYPE html>
         data: {
           labels: hourlyLabels,
           datasets: [
-            {
-              label: 'Station Entries',
-              data: data.entries,
-              backgroundColor: '#a855f7',
-              borderRadius: 4
-            },
-            {
-              label: 'Station Exits',
-              data: data.exits,
-              backgroundColor: '#22c55e',
-              borderRadius: 4
-            }
+            { label: 'Station Entries', data: data.entries, backgroundColor: '#a855f7', borderRadius: 4 },
+            { label: 'Station Exits', data: data.exits, backgroundColor: '#22c55e', borderRadius: 4 }
           ]
         },
         options: {
@@ -620,7 +554,6 @@ HTML_PAGE = """<!DOCTYPE html>
     select.addEventListener('change', (e) => loadStationData(e.target.value));
     populateStationSelect(stationsSummary);
 
-    // 5. Routes Table
     function renderRoutes() {
       const filter = document.getElementById('routeSearch').value.toLowerCase().trim();
       const tbody = document.getElementById('routesTableBody');
@@ -665,75 +598,52 @@ HTML_PAGE = """<!DOCTYPE html>
 </html>
 """
 
-class RidershipHandler(SimpleHTTPRequestHandler):
-    def do_GET(self):
-        parsed_url = urllib.parse.urlparse(self.path)
-        path = parsed_url.path
-        query = urllib.parse.parse_qs(parsed_url.query)
+# Vercel & WSGI Entrypoint Function
+def app(environ, start_response):
+    path = environ.get('PATH_INFO', '/')
+    query_string = environ.get('QUERY_STRING', '')
 
-        if path == '/' or path == '/index.html':
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html; charset=utf-8')
-            self.end_headers()
-            self.wfile.write(HTML_PAGE.encode('utf-8'))
-            return
+    if path == '/' or path == '/index.html':
+        start_response('200 OK', [
+            ('Content-Type', 'text/html; charset=utf-8'),
+            ('Cache-Control', 'public, max-age=3600')
+        ])
+        return [HTML_PAGE.encode('utf-8')]
 
-        elif path == '/api/summary':
-            summary_data = {
-                'total_entries': total_entries,
-                'total_exits': total_exits,
-                'total_revenue': total_revenue,
-                'station_count': len(unique_stations),
-                'lines': line_stats,
-                'date_min': date_min,
-                'date_max': date_max
-            }
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(json.dumps(summary_data).encode('utf-8'))
-            return
+    elif path == '/api/summary':
+        start_response('200 OK', [
+            ('Content-Type', 'application/json'),
+            ('Access-Control-Allow-Origin', '*')
+        ])
+        return [json.dumps(cache['summary']).encode('utf-8')]
 
-        elif path == '/api/station':
-            st_name = query.get('name', [''])[0]
-            if not st_name:
-                self.send_response(400)
-                self.end_headers()
-                return
+    elif path == '/api/station':
+        query = urllib.parse.parse_qs(query_string)
+        st_name = query.get('name', [''])[0]
+        st_data = cache['station_hourly_lookup'].get(st_name, {'entries': [0]*24, 'exits': [0]*24})
+        res = {
+            'station': st_name,
+            'entries': st_data['entries'],
+            'exits': st_data['exits']
+        }
+        start_response('200 OK', [
+            ('Content-Type', 'application/json'),
+            ('Access-Control-Allow-Origin', '*')
+        ])
+        return [json.dumps(res).encode('utf-8')]
 
-            sub_entries = df_entries[df_entries['Station'] == st_name]
-            sub_exits = df_exits[df_exits['Station'] == st_name]
+    start_response('404 Not Found', [('Content-Type', 'text/plain')])
+    return [b'Not Found']
 
-            h_ent = sub_entries.groupby('Hour')['Ridership'].sum().to_dict()
-            h_ext = sub_exits.groupby('Hour')['Ridership'].sum().to_dict()
-
-            res = {
-                'station': st_name,
-                'lines': station_to_lines.get(st_name, []),
-                'entries': [int(h_ent.get(h, 0)) for h in range(24)],
-                'exits': [int(h_ext.get(h, 0)) for h in range(24)]
-            }
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(json.dumps(res).encode('utf-8'))
-            return
-
-        super().do_GET()
-
-def run_server():
-    server_address = ('0.0.0.0', PORT)
-    httpd = ThreadingHTTPServer(server_address, RidershipHandler)
-    print(f"BMRCL Ridership Analytics Server running at:")
-    print(f"  Local:    http://localhost:{PORT}")
-    print(f"  Network:  http://127.0.0.1:{PORT}")
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\nShutting down server.")
-        httpd.server_close()
+# Top-level exports expected by Vercel Functions runtime:
+application = app
+handler = app
 
 if __name__ == '__main__':
-    run_server()
+    port = int(os.environ.get('PORT', 8000))
+    print(f"BMRCL Ridership Analytics Server running at http://localhost:{port}")
+    with make_server('0.0.0.0', port, app) as httpd:
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\nShutting down.")
