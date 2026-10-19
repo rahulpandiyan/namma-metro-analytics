@@ -1,0 +1,21 @@
+origin_station,destination_station,travelled_stations,fare,total_passengers,total_revenue_inr
+Benniganahalli,"Nadaprabhu Kempegowda Station, Majestic",10,50,44477,2223850
+Kadugodi Tree Park,Sri Sathya Sai Hospital,2,10,34924,349240
+Sri Sathya Sai Hospital,Kadugodi Tree Park,2,10,34736,347360
+Benniganahalli,Indiranagar,3,20,28838,576760
+Yeshwantpur,"Nadaprabhu Kempegowda Station, Majestic",7,40,27539,1101560
+Banashankari,"Nadaprabhu Kempegowda Station, Majestic",8,40,27130,1085200
+Indiranagar,Benniganahalli,3,20,27008,540160
+Chickpete,"Nadaprabhu Kempegowda Station, Majestic",1,10,26947,269470
+Mahatma Gandhi Road,Indiranagar,3,20,24365,487300
+"Nadaprabhu Kempegowda Station, Majestic",Benniganahalli,10,50,23921,1196050
+Mahatma Gandhi Road,Benniganahalli,6,30,23641,709230
+Benniganahalli,Mahatma Gandhi Road,6,30,23408,702240
+Krishnarajapura,"Nadaprabhu Kempegowda Station, Majestic",11,60,23402,1404120
+Konanakunte Cross,"Nadaprabhu Kempegowda Station, Majestic",11,60,23108,1386480
+"Nadaprabhu Kempegowda Station, Majestic",Yeshwantpur,7,40,22513,900520
+Mahatma Gandhi Road,"Nadaprabhu Kempegowda Station, Majestic",4,20,22222,444440
+Indiranagar,Mahatma Gandhi Road,3,20,21667,433340
+Halasuru,Mahatma Gandhi Road,2,10,21518,215180
+"Nadaprabhu Kempegowda Station, Majestic",Chickpete,1,10,21425,214250
+Jayanagar,"Nadaprabhu Kempegowda Station, Majestic",6,30,20891,626730

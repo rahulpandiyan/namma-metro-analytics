@@ -1,0 +1,25 @@
+hour_of_day,total_hourly_entries,pct_of_volume,period_type
+0,666,0.0,Regular Operating
+1,0,0.0,Regular Operating
+2,0,0.0,Regular Operating
+3,628,0.0,Regular Operating
+4,45473,0.13,Regular Operating
+5,214570,0.63,Regular Operating
+6,535167,1.58,Regular Operating
+7,1430096,4.23,Regular Operating
+8,2633907,7.78,Morning Rush Peak
+9,3105111,9.18,Morning Rush Peak
+10,2273407,6.72,Morning Rush Peak
+11,1731081,5.12,Regular Operating
+12,1660593,4.91,Regular Operating
+13,1719524,5.08,Regular Operating
+14,1699369,5.02,Regular Operating
+15,1830167,5.41,Regular Operating
+16,2313129,6.84,Regular Operating
+17,2870284,8.48,Evening Rush Peak
+18,3330084,9.84,Evening Rush Peak
+19,2740976,8.1,Evening Rush Peak
+20,1823085,5.39,Evening Rush Peak
+21,1159397,3.43,Regular Operating
+22,635188,1.88,Regular Operating
+23,85980,0.25,Regular Operating

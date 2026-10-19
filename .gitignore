@@ -1,2 +1,6 @@
 __pycache__
 .venv/
+hdfs_storage/
+data/csv/
+mapreduce/build_classes/
+*.pyc

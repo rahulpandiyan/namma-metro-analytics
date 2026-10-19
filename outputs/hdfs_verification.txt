@@ -1,0 +1,8 @@
+drwxr-xr-x   - rahul rahul       4096 2026-10-19 17:24 /home/rahul/Downloads/bmrcl-ridership-hourly/hdfs_storage/namma_metro/input
+drwxr-xr-x   - rahul rahul       4096 2026-10-19 17:24 /home/rahul/Downloads/bmrcl-ridership-hourly/hdfs_storage/namma_metro/input/exits
+-rw-r--r--   1 rahul rahul    3277469 2026-10-19 17:24 /home/rahul/Downloads/bmrcl-ridership-hourly/hdfs_storage/namma_metro/input/exits/station-hourly-exits.csv
+drwxr-xr-x   - rahul rahul       4096 2026-10-19 17:24 /home/rahul/Downloads/bmrcl-ridership-hourly/hdfs_storage/namma_metro/input/pairs
+-rw-r--r--   1 rahul rahul   79874945 2026-10-19 17:24 /home/rahul/Downloads/bmrcl-ridership-hourly/hdfs_storage/namma_metro/input/pairs/stationpair-hourly-enhanced.csv
+drwxr-xr-x   - rahul rahul       4096 2026-10-19 17:24 /home/rahul/Downloads/bmrcl-ridership-hourly/hdfs_storage/namma_metro/input/entries
+-rw-r--r--   1 rahul rahul    3169630 2026-10-19 17:24 /home/rahul/Downloads/bmrcl-ridership-hourly/hdfs_storage/namma_metro/input/entries/station-hourly-entries.csv
+drwxr-xr-x   - rahul rahul       4096 2026-10-19 17:24 /home/rahul/Downloads/bmrcl-ridership-hourly/hdfs_storage/namma_metro/output
