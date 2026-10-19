@@ -50,8 +50,11 @@ with st.sidebar:
     st.markdown("---")
     
     st.markdown("**Academic Details**")
-    st.text("Course: Big Data Analytics (2022 Scheme)")
+    st.text("Course: Big Data Analytics (BCS714D)")
+    st.text("Scheme: 2022 Scheme")
     st.text("Semester: 7th Semester B.E.")
+    st.markdown("**Project Team:**")
+    st.markdown("- **Rahul**\n- **Sam Goldwin**\n- **Veeresh K Pattanshetty**")
     st.text("Source: BMRCL RTI Dataset")
     st.text("Period: Aug 1-18 & Sep 1-30, 2025")
     
@@ -67,6 +70,7 @@ with st.sidebar:
 # Header
 st.markdown('<div class="main-header">🚇 Namma Metro Pulse — Big Data Analytics</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">Passenger Flow and Station Demand Analysis in Bengaluru • Hadoop HDFS, MapReduce, Apache Hive & Apache Pig</div>', unsafe_allow_html=True)
+st.markdown('<div style="margin-top: -1rem; margin-bottom: 1.5rem; padding: 8px 14px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #7c3aed; font-size: 0.88rem; color: #334155;">👨‍💻 <strong>Project Team:</strong> Rahul &bull; Sam Goldwin &bull; Veeresh K Pattanshetty &nbsp;|&nbsp; <em>VTU 7th Semester B.E. (BCS714D, 2022 Scheme)</em></div>', unsafe_allow_html=True)
 
 if not data:
     st.error("Data cache not found. Please run scripts/00_prepare_data.sh and scripts/02_run_mapreduce.sh first.")

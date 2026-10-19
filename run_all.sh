@@ -19,7 +19,11 @@ if [ ! -d "$PROJECT_ROOT/.venv" ]; then
     echo "[Init] Setting up Python virtual environment..."
     python3 -m venv "$PROJECT_ROOT/.venv"
     source "$PROJECT_ROOT/.venv/bin/activate"
-    pip install -r "$PROJECT_ROOT/requirements.txt"
+    if [ -f "$PROJECT_ROOT/requirements-local.txt" ]; then
+        pip install -r "$PROJECT_ROOT/requirements-local.txt"
+    else
+        pip install -r "$PROJECT_ROOT/requirements.txt"
+    fi
 fi
 
 # Step 1: Data Preparation

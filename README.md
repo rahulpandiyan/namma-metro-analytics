@@ -2,7 +2,8 @@
 
 **VTU 7th Semester B.E. Big Data Analytics (BCS714D, 2022 Scheme) Project**  
 **Repository:** [https://github.com/rahulpandiyan/namma-metro-analytics](https://github.com/rahulpandiyan/namma-metro-analytics)  
-**Author:** Rahul Pandiyan ([@rahulpandiyan](https://github.com/rahulpandiyan))
+**Project Team:** **Rahul**, **Sam Goldwin**, and **Veeresh K Pattanshetty**  
+**Course Code:** BCS714D (2022 Scheme)
 
 ---
 
@@ -299,7 +300,12 @@ All numbers below were computed from the genuine BMRCL dataset by our Hadoop Map
 - **Dataset Curator:** Sincere appreciation to **[Vonter (bmrcl-ridership-hourly)](https://github.com/Vonter/bmrcl-ridership-hourly)** for curating the raw RTI Excel files and creating the initial open-source repository under the Open Database License.
 - **Network Graph & Fare Calculations:** Credit to **[@kdqed](https://github.com/kdqed)** for the network shortest-path algorithms and BMRCL fare slab calculation logic.
 - **RTI Guidance:** Credit to **[Zen Citizen](https://zencitizen.in/)** for their published framework on filing public transit RTI applications.
-- **Academic Framework:** Developed for the Department of Computer Science & Engineering, Visvesvaraya Technological University (VTU) under the 2022 Scheme for BCS714D.
+- **Academic Project Team:**
+  - **Rahul**
+  - **Sam Goldwin**
+  - **Veeresh K Pattanshetty**
+  - *Department of Computer Science & Engineering / Information Science & Engineering*
+  - *Visvesvaraya Technological University (VTU) — 7th Semester B.E. (BCS714D, 2022 Scheme)*
 
 ---
 

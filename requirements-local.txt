@@ -1,0 +1,9 @@
+# Local Development & Full Lab Execution Requirements
+# Used by scripts/run_all.sh, Hadoop data extraction, and Streamlit dashboard
+fastparquet==2024.11.0
+networkx==3.5
+numpy>=2.0.0
+pandas>=2.2.0
+openpyxl==3.1.2
+streamlit>=1.30.0
+plotly>=5.18.0

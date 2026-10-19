@@ -1,7 +1,4 @@
-fastparquet==2024.11.0
-networkx==3.5
-numpy>=2.0.0
-pandas>=2.2.0
-openpyxl==3.1.2
-streamlit>=1.30.0
-plotly>=5.18.0
+# Vercel Serverless Function Deployment Requirements
+# server.py executes with Python standard library (wsgiref, json, os, urllib)
+# using bundled data_cache.json with 0MB external dependency overhead.
+# For local Big Data processing & Streamlit dashboard, see requirements-local.txt.

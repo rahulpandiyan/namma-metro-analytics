@@ -4,6 +4,7 @@
 **Program:** Bachelor of Engineering (B.E.) — 7th Semester  
 **Department:** Computer Science & Engineering / Information Science & Engineering  
 **Project Title:** Namma Metro Pulse — Big Data Analytics for Passenger Flow and Station Demand in Bengaluru  
+**Project Team Members:** **Rahul**, **Sam Goldwin**, and **Veeresh K Pattanshetty**  
 **Dataset Source:** Bangalore Metro Rail Corporation Limited (BMRCL) RTI Disclosure ([github.com/Vonter/bmrcl-ridership-hourly](https://github.com/Vonter/bmrcl-ridership-hourly))
 
 ---
