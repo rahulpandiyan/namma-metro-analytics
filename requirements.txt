@@ -1,4 +1,3 @@
-# Vercel Serverless Function Deployment Requirements
-# server.py executes with Python standard library (wsgiref, json, os, urllib)
-# using bundled data_cache.json with 0MB external dependency overhead.
-# For local Big Data processing & Streamlit dashboard, see requirements-local.txt.
+streamlit>=1.30.0
+pandas>=2.2.0
+plotly>=5.18.0

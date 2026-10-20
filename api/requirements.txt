@@ -1,0 +1,1 @@
+# Minimal requirements for Vercel serverless function (api/index.py uses stdlib)
